@@ -47,15 +47,9 @@ def process_m3u_file(i, filename, s3_bucket):
 
 def main():
     #Local playlist files for each profile
-    filenames = []
     for i in range(1, number_of_profiles + 1):
-        filenames.append(f'{profile_file_prefix}{str(i)}.m3u')
-
-    i = 1
-    for filename in filenames:
         #Replace all .ts file references with S3 pre-signed URLs
-        process_m3u_file(i, filename, s3_bucket)
-        i += 1
+        process_m3u_file(i, f'{profile_file_prefix}{str(i)}.m3u', s3_bucket)
 
     #Local Top-level playlist file
     m3u_file = open(playlist_file, 'rb')

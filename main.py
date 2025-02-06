@@ -1,21 +1,27 @@
+from configparser import ConfigParser
 import boto3
 from botocore.config import Config
 
-conf = Config(
+s3_conf = Config(
     s3={
         'use_accelerate_endpoint':True
     }
 )
 
-s3_bucket = 'jhart-video-syd'
-region = 'ap-southeast-2'
-s3 = boto3.client('s3', region_name=region, config=conf)
-number_of_profiles = 5
-bucket_prefix = "hls/"
-playlist_file = 'playlist.m3u8'
-profile_file_prefix = 'bbb_sunflower_1080p_30fps_normal_'
-output_filename = 's3ta.m3u8'
-output_profile_prefix = 's3ta_'
+config = ConfigParser()
+config.read('settings.ini')
+
+s3_bucket = config.get('VideoSource', 's3_bucket')
+region = config.get('VideoSource', 'region')
+number_of_profiles = config.getint('VideoSource', 'number_of_profiles')
+bucket_prefix = config.get('VideoSource', 'bucket_prefix')
+playlist_file = config.get('VideoSource', 'playlist_file')
+profile_file_prefix = config.get('VideoSource', 'profile_file_prefix')
+output_filename = config.get('VideoSource', 'output_filename')
+output_profile_prefix = config.get('VideoSource', 'output_profile_prefix')
+pre_signed_url_expiry = config.getint('VideoSource', 'pre_signed_url_expiry')
+
+s3 = boto3.client('s3', region_name=region, config=s3_conf)
 
 def replace_url_with_s3(m3u_content, s3_bucket):
     lines = m3u_content.splitlines()
@@ -23,11 +29,11 @@ def replace_url_with_s3(m3u_content, s3_bucket):
     i = 1
     for line in lines:
         if line.endswith('.m3u8'):
-            s3_url = s3.generate_presigned_url('get_object', ExpiresIn=3600, Params={'Bucket': s3_bucket, 'Key': f'{bucket_prefix}{output_profile_prefix}{str(i)}.m3u8'})
+            s3_url = s3.generate_presigned_url('get_object', ExpiresIn=pre_signed_url_expiry, Params={'Bucket': s3_bucket, 'Key': f'{bucket_prefix}{output_profile_prefix}{str(i)}.m3u8'})
             modified_lines.append(s3_url)
             i += 1
         elif line.endswith('.ts'):
-            s3_url = s3.generate_presigned_url('get_object', ExpiresIn=3600, Params={'Bucket': s3_bucket, 'Key': f'{bucket_prefix}{line}'})
+            s3_url = s3.generate_presigned_url('get_object', ExpiresIn=pre_signed_url_expiry, Params={'Bucket': s3_bucket, 'Key': f'{bucket_prefix}{line}'})
             modified_lines.append(s3_url)
         else:
             modified_lines.append(line)
@@ -64,7 +70,7 @@ def main():
     upload_to_s3(output_filename, s3_bucket)
 
     #Generate final presigned url for playlist
-    s3_url = s3.generate_presigned_url('get_object', ExpiresIn=3600, Params={'Bucket': s3_bucket, 'Key': bucket_prefix + output_filename})
+    s3_url = s3.generate_presigned_url('get_object', ExpiresIn=pre_signed_url_expiry, Params={'Bucket': s3_bucket, 'Key': bucket_prefix + output_filename})
     print(s3_url)
 
 if __name__ == '__main__':

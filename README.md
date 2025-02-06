@@ -6,15 +6,47 @@ This can be used for solutions where CloudFront is not appropriate and S3 or S3 
 
 Note: The generated URLs are only valid for as long as the credentials used to sign them. For example, if you are using an assumed role with a 1 hour session duration, the maximum validity of a presigned URL is 60 minutes. To achieve longer than this, use long-lived credentials to generate the URLs.
 
-## Getting started
+## Prerequisites
 
-No additional dependencies are required beyond python 3.x and boto3:
+- Python 3.6 or higher
+- AWS credentials configured
+- AWS IAM permissions for S3 access
 
-`pip install boto3`
+## Installation
 
-Update the `filenames` array in `main.py` with the list of playlist profiles that you already have downloaded locally to this directory
+1. Create and activate a Python virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate
+```
 
-Update the S3 bucket and region at the top of the file. 
+2. Install required dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-You can toggle transfer acceleration on and off by changing the `use_accelerate_endpoint` in the Config object. 
+## Configuration
 
+1. Modify the `settings.ini` file in the project root
+
+## AWS Credentials Setup
+
+Ensure you have AWS credentials configured either through:
+- AWS CLI (`aws configure`)
+- Environment variables
+- IAM role if running on AWS infrastructure
+
+## Usage
+
+Run the main script:
+```bash
+python main.py
+```
+
+This then generates the pre-signed playlist files and uploads them back to the S3 bucket. 
+
+The tool will output a preview URL. This url can be copied into an HLS player e.g. https://hlsjs.video-dev.org/demo/ 
+
+## Dependencies
+
+- boto3: AWS SDK for Python
